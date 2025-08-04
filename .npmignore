@@ -18,6 +18,7 @@ src/__tests__/
 dist/__tests__/
 dist/**/*.test.js
 dist/**/*.test.d.ts
+dist/**/__tests__/
 
 # Development dependencies
 node_modules/
