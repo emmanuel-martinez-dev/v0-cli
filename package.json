@@ -1,6 +1,6 @@
 {
   "name": "v0-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI tool for v0 SDK",
   "main": "dist/index.js",
   "bin": {
@@ -47,11 +47,11 @@
     "url": "https://github.com/emmanuel-martinez-dev/v0-cli.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/emmanuel-martinez-dev/v0-cli#readme" ,
+  "homepage": "https://github.com/emmanuel-martinez-dev/v0-cli#readme",
   "bugs": {
     "url": "https://github.com/emmanuel-martinez-dev/v0-cli#readme"
   },
   "engines": {
     "node": ">=18.0.0"
   }
-} 
+}
