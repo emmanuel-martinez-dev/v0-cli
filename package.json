@@ -41,17 +41,16 @@
     "ai",
     "chat"
   ],
-  "author": "Vercel",
+  "author": "Emmanuel Martinez",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vercel/v0-sdk.git",
+    "url": "https://github.com/emmanuel-martinez-dev/v0-cli.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/vercel/v0-sdk#readme",
+  "homepage": "https://github.com/emmanuel-martinez-dev/v0-cli#readme" ,
   "bugs": {
-    "url": "https://github.com/vercel/v0-sdk/issues"
+    "url": "https://github.com/emmanuel-martinez-dev/v0-cli#readme"
   },
-  "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   }
