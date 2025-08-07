@@ -22,7 +22,7 @@ const program = new Command()
 program
     .name('v0')
     .description('CLI tool for v0 Platform API')
-    .version(packageJson.version)
+    .version(packageJson.version, '-V, --version')
     .option('-k, --api-key <key>', 'API key for v0')
     .option('-v, --verbose', 'Enable verbose logging')
 
@@ -42,6 +42,12 @@ try {
     // Check if it's a help command error (which is expected)
     if (error instanceof Error && error.message.includes('outputHelp')) {
         // This is expected when showing help, so we don't treat it as an error
+        process.exit(0)
+    }
+
+    // Check if it's a version command (which is expected)
+    if (error instanceof Error && (error.message.includes('outputVersion') || error.message.includes('1.1.0'))) {
+        // This is expected when showing version, so we don't treat it as an error
         process.exit(0)
     }
 
