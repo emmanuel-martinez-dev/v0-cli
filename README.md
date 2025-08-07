@@ -171,7 +171,41 @@ v0 deploy list --chat-id CHAT_ID
 
 #### Create deployment
 ```bash
+# Interactive deployment (recommended)
+v0 deploy create
+
+# With specific IDs
 v0 deploy create PROJECT_ID CHAT_ID VERSION_ID
+
+# With project and chat names
+v0 deploy create --project-name "My Project" --chat-name "My Chat"
+
+# Force interactive mode
+v0 deploy create --interactive
+```
+
+#### Quick deploy from chat
+```bash
+# Interactive chat selection
+v0 deploy from-chat
+
+# With chat ID
+v0 deploy from-chat CHAT_ID
+
+# With chat name
+v0 deploy from-chat --chat-name "My Chat"
+```
+
+#### Quick deploy (create project, chat and deploy)
+```bash
+# Interactive mode
+v0 deploy quick
+
+# With message
+v0 deploy quick "Create a React todo app"
+
+# With project name and message
+v0 deploy quick "Create a React todo app" --project-name "Todo App"
 ```
 
 #### Get deployment details
@@ -317,6 +351,21 @@ v0 deploy create PROJECT_ID CHAT_ID VERSION_ID
 v0 deploy logs DEPLOYMENT_ID
 ```
 
+### Quick Deploy Workflow (Recommended)
+```bash
+# 1. Configure CLI
+v0 config setup
+
+# 2. Quick deploy everything in one command
+v0 deploy quick "Create a React todo app with local storage"
+
+# 3. Or deploy from existing chat
+v0 deploy from-chat
+
+# 4. View deployment logs
+v0 deploy logs DEPLOYMENT_ID
+```
+
 ### Automation
 ```bash
 # Create chat and get URL
@@ -325,6 +374,10 @@ echo "Chat created: $CHAT_URL"
 
 # List projects in JSON format
 v0 project list --output json | jq '.[] | .name'
+
+# Quick deploy with automation
+DEPLOYMENT_URL=$(v0 deploy quick "Create a React component" --output json | jq -r '.deployment.webUrl')
+echo "Deployment ready: $DEPLOYMENT_URL"
 ```
 
 ## Features
@@ -336,6 +389,9 @@ v0 project list --output json | jq '.[] | .name'
 - ✅ **Spinners and feedback**: Visual progress indicators
 - ✅ **Validation**: Input validation and confirmations
 - ✅ **Colors**: Colored output for better readability
+- ✅ **Smart deployment**: Interactive project and chat selection
+- ✅ **Quick deploy**: Create project, chat and deploy in one command
+- ✅ **Name-based selection**: Select resources by name instead of IDs
 
 ## Development
 
