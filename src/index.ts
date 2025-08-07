@@ -46,7 +46,7 @@ try {
     }
 
     // Check if it's a version command (which is expected)
-    if (error instanceof Error && (error.message.includes('outputVersion') || error.message.includes('1.1.0'))) {
+    if (error instanceof Error && (error.message.includes('outputVersion') || error.message.includes(packageJson.version))) {
         // This is expected when showing version, so we don't treat it as an error
         process.exit(0)
     }
