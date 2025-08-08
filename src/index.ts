@@ -25,6 +25,7 @@ program
     .version(packageJson.version, '-V, --version')
     .option('-k, --api-key <key>', 'API key for v0')
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-o, --output <format>', 'Output format (json|table|yaml)')
 
 // Add commands
 chatCommand(program)
@@ -54,6 +55,9 @@ try {
     // Handle other errors
     if (error instanceof Error) {
         console.error(chalk.red('Error:'), error.message)
+        if (program.opts().verbose) {
+            console.error(error)
+        }
     } else {
         console.error(chalk.red('Unknown error occurred'))
     }

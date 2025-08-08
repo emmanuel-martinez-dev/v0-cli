@@ -18,12 +18,14 @@ export function deployCommand(program: Command): void {
         .option('-p, --project-id <id>', 'Filter by project ID')
         .option('-c, --chat-id <id>', 'Filter by chat ID')
         .option('-v, --version-id <id>', 'Filter by version ID')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching deployments...').start()
 
@@ -49,7 +51,7 @@ export function deployCommand(program: Command): void {
                     webUrl: deployment.webUrl
                 }))
 
-                formatOutput(deployments, config.outputFormat)
+                formatOutput(deployments, outputFormat)
 
             } catch (err) {
                 error(`Failed to list deployments: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -67,14 +69,16 @@ export function deployCommand(program: Command): void {
         .option('-i, --interactive', 'Force interactive mode')
         .option('-p, --project-name <name>', 'Select project by name')
         .option('-c, --chat-name <name>', 'Select chat by name')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (projectId, chatId, versionId, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
-                let finalProjectId = projectId
+                let finalProjectId = projectId || config.defaultProject || undefined
                 let finalChatId = chatId
                 let finalVersionId = versionId
 
@@ -197,7 +201,7 @@ export function deployCommand(program: Command): void {
 
                 spinner.succeed('Deployment created successfully!')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Deployment Details:'))
                     console.log(`ID: ${deployment.id}`)
                     console.log(`Project ID: ${deployment.projectId}`)
@@ -206,7 +210,7 @@ export function deployCommand(program: Command): void {
                     console.log(`Inspector URL: ${deployment.inspectorUrl}`)
                     console.log(`Web URL: ${deployment.webUrl}`)
                 } else {
-                    formatOutput(deployment, config.outputFormat)
+                    formatOutput(deployment, outputFormat)
                 }
 
                 success(`Deployment URL: ${deployment.webUrl}`)
@@ -224,13 +228,16 @@ export function deployCommand(program: Command): void {
         .description('Quick deploy from a chat (uses latest version)')
         .argument('[chatId]', 'Chat ID (optional - will prompt if not provided)')
         .option('-c, --chat-name <name>', 'Select chat by name')
-        .option('-p, --project-name <name>', 'Select project by name')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-p, --project-name <name>', 'Select project by name (override chat/default)')
+        .option('-P, --project-id <id>', 'Project ID to use (override chat/default)')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (chatId, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 let finalChatId = chatId
 
@@ -285,22 +292,73 @@ export function deployCommand(program: Command): void {
                     process.exit(1)
                 }
 
-                if (!chatDetails.projectId) {
-                    error('This chat is not associated with a project. Please assign it to a project first.')
+                // Resolve project to use: explicit overrides > chat's project > defaultProject
+                let resolvedProjectId: string | undefined = options.projectId
+                if (!resolvedProjectId && options.projectName) {
+                    const projectsResponse = await v0.projects.find()
+                    const match = projectsResponse.data.find(p => p.name?.toLowerCase().includes(options.projectName.toLowerCase()))
+                    if (!match) {
+                        error(`Project with name containing "${options.projectName}" not found`)
+                        process.exit(1)
+                    }
+                    info(`Selected project by name: ${match.name} (${match.id})`)
+                    resolvedProjectId = match.id
+                }
+                if (!resolvedProjectId) {
+                    resolvedProjectId = chatDetails.projectId || config.defaultProject || undefined
+                }
+                if (!resolvedProjectId) {
+                    error('This chat is not associated with a project and no default project is configured. Provide --project-id/--project-name or set a default project via "v0 config set-default-project".')
                     process.exit(1)
+                }
+
+                // Validate that project is linked to Vercel
+                let projectDetails = await v0.projects.getById({ projectId: resolvedProjectId })
+                if (!projectDetails.vercelProjectId) {
+                    // Try defaultProject as fallback if different and linked
+                    if (config.defaultProject && config.defaultProject !== resolvedProjectId) {
+                        const defaultProjectDetails = await v0.projects.getById({ projectId: config.defaultProject })
+                        if (defaultProjectDetails.vercelProjectId) {
+                            info(`Selected project is not linked to Vercel. Falling back to default project: ${defaultProjectDetails.name} (${defaultProjectDetails.id})`)
+                            resolvedProjectId = defaultProjectDetails.id
+                            projectDetails = defaultProjectDetails
+                        }
+                    }
+                }
+                if (!projectDetails.vercelProjectId) {
+                    // Interactive selection of another project
+                    const projectsResponse = await v0.projects.find()
+                    if (!projectsResponse.data || projectsResponse.data.length === 0) {
+                        error('No projects found in your account. Create one first.')
+                        process.exit(1)
+                    }
+                    const answer = await inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'projectId',
+                            message: 'Selected project is not linked to Vercel. Select a different project to deploy (must be Vercel-linked):',
+                            choices: projectsResponse.data.map((p) => ({ name: `${p.name} (${p.id})`, value: p.id })),
+                        },
+                    ])
+                    const altProject = await v0.projects.getById({ projectId: answer.projectId })
+                    if (!altProject.vercelProjectId) {
+                        error('The selected project is still not linked to Vercel. Please link a Vercel project from the project page and retry.')
+                        process.exit(1)
+                    }
+                    resolvedProjectId = altProject.id
                 }
 
                 const spinner2 = ora('Creating deployment...').start()
 
                 const deployment = await v0.deployments.create({
-                    projectId: chatDetails.projectId,
+                    projectId: resolvedProjectId,
                     chatId: finalChatId,
                     versionId: chatDetails.latestVersion.id
                 })
 
                 spinner2.succeed('Deployment created successfully!')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Deployment Details:'))
                     console.log(`ID: ${deployment.id}`)
                     console.log(`Project ID: ${deployment.projectId}`)
@@ -309,7 +367,7 @@ export function deployCommand(program: Command): void {
                     console.log(`Inspector URL: ${deployment.inspectorUrl}`)
                     console.log(`Web URL: ${deployment.webUrl}`)
                 } else {
-                    formatOutput(deployment, config.outputFormat)
+                    formatOutput(deployment, outputFormat)
                 }
 
                 success(`Deployment URL: ${deployment.webUrl}`)
@@ -329,12 +387,14 @@ export function deployCommand(program: Command): void {
         .option('-p, --project-name <name>', 'Project name (optional - will prompt if not provided)')
         .option('-s, --system <system>', 'System message for the chat')
         .option('-m, --model <model>', 'Model to use', 'v0-1.5-md')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (message, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 let chatMessage = message
                 let projectName = options.projectName
@@ -403,18 +463,18 @@ export function deployCommand(program: Command): void {
 
                 // Wait a bit for the chat to process
                 const spinner3 = ora('Waiting for chat to process...').start()
-                await new Promise(resolve => setTimeout(resolve, 3000))
-
-                // Get chat details to check if version is ready
-                const chatDetails = await v0.chats.getById({ chatId: chat.id })
-
+                // Poll for latestVersion up to ~60s
+                let chatDetails = await v0.chats.getById({ chatId: chat.id })
+                const startTime = Date.now()
+                while (!chatDetails.latestVersion && Date.now() - startTime < 60000) {
+                    await new Promise(resolve => setTimeout(resolve, 3000))
+                    chatDetails = await v0.chats.getById({ chatId: chat.id })
+                }
                 if (!chatDetails.latestVersion) {
-                    spinner3.fail('No version generated yet. Please try again in a moment.')
+                    spinner3.fail('No version generated yet after waiting. Try again later.')
                     info(`Chat URL: ${chat.webUrl}`)
-                    info('You can check the chat and try deploying again later.')
                     return
                 }
-
                 spinner3.succeed('Chat processed successfully!')
 
                 const spinner4 = ora('Creating deployment...').start()
@@ -428,7 +488,7 @@ export function deployCommand(program: Command): void {
 
                 spinner4.succeed('Deployment created successfully!')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Quick Deploy Summary:'))
                     console.log(`Project: ${project.name} (${project.id})`)
                     console.log(`Chat: ${chat.name || 'Unnamed'} (${chat.id})`)
@@ -441,7 +501,7 @@ export function deployCommand(program: Command): void {
                         project,
                         chat,
                         deployment
-                    }, config.outputFormat)
+                    }, outputFormat)
                 }
 
                 success(`🎉 Quick deploy completed successfully!`)

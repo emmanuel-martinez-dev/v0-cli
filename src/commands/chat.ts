@@ -19,12 +19,16 @@ export function chatCommand(program: Command): void {
         .option('-s, --system <system>', 'System message')
         .option('-p, --privacy <privacy>', 'Privacy setting (public|private)', 'private')
         .option('-m, --model <model>', 'Model to use', 'v0-1.5-md')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
+        .option('-P, --project-id <projectId>', 'Project ID to associate')
+        .option('-a, --attachment <url...>', 'Attachment URL(s)')
         .action(async (message, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 let chatMessage = message
                 if (!chatMessage) {
@@ -50,17 +54,21 @@ export function chatCommand(program: Command): void {
                     message: chatMessage,
                     system: options.system,
                     chatPrivacy: options.privacy as any,
+                    projectId: options.projectId || config.defaultProject || undefined,
                     modelConfiguration: {
                         modelId: options.model as any
-                    }
+                    },
+                    attachments: Array.isArray(options.attachment)
+                        ? options.attachment.map((url: string) => ({ url }))
+                        : undefined,
                 })
 
                 spinner.succeed('Chat created successfully!')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     formatChat(chat)
                 } else {
-                    formatOutput(chat, config.outputFormat)
+                    formatOutput(chat, outputFormat)
                 }
 
                 success(`Chat URL: ${chat.webUrl}`)
@@ -77,12 +85,14 @@ export function chatCommand(program: Command): void {
         .description('List all chats')
         .option('-f, --favorite', 'Show only favorite chats')
         .option('-l, --limit <number>', 'Number of chats to show', '10')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching chats...').start()
 
@@ -106,7 +116,7 @@ export function chatCommand(program: Command): void {
                     url: chat.webUrl
                 }))
 
-                formatOutput(chats, config.outputFormat)
+                formatOutput(chats, outputFormat)
 
             } catch (err) {
                 error(`Failed to list chats: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -119,12 +129,14 @@ export function chatCommand(program: Command): void {
         .command('get')
         .description('Get chat details')
         .argument('<chatId>', 'Chat ID')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (chatId, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching chat details...').start()
 
@@ -132,10 +144,10 @@ export function chatCommand(program: Command): void {
 
                 spinner.succeed('Chat details retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     formatChat(chat)
                 } else {
-                    formatOutput(chat, config.outputFormat)
+                    formatOutput(chat, outputFormat)
                 }
 
             } catch (err) {
@@ -150,12 +162,14 @@ export function chatCommand(program: Command): void {
         .description('Send a message to a chat')
         .argument('<chatId>', 'Chat ID')
         .argument('[message]', 'Message to send')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (chatId, message, options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 let chatMessage = message
                 if (!chatMessage) {
@@ -184,12 +198,12 @@ export function chatCommand(program: Command): void {
 
                 spinner.succeed('Message sent successfully!')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Message sent successfully!'))
                     console.log(`Chat ID: ${chatId}`)
                     console.log(`Message: ${chatMessage}`)
                 } else {
-                    formatOutput({ chatId, message: chatMessage }, config.outputFormat)
+                    formatOutput({ chatId, message: chatMessage }, outputFormat)
                 }
 
             } catch (err) {

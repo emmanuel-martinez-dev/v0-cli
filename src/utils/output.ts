@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { CliConfig } from './config.js'
+import YAML from 'yaml'
 
 export function formatOutput(data: any, format: 'json' | 'table' | 'yaml' = 'table'): void {
     switch (format) {
@@ -7,7 +8,12 @@ export function formatOutput(data: any, format: 'json' | 'table' | 'yaml' = 'tab
             console.log(JSON.stringify(data, null, 2))
             break
         case 'yaml':
-            console.log(JSON.stringify(data, null, 2)) // Simplified YAML for now
+            try {
+                const yamlString = YAML.stringify(data)
+                console.log(yamlString)
+            } catch (err) {
+                console.log(JSON.stringify(data, null, 2))
+            }
             break
         case 'table':
         default:

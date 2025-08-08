@@ -14,12 +14,14 @@ export function userCommand(program: Command): void {
     user
         .command('info')
         .description('Get user information')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching user information...').start()
 
@@ -27,10 +29,10 @@ export function userCommand(program: Command): void {
 
                 spinner.succeed('User information retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     formatUser(user)
                 } else {
-                    formatOutput(user, config.outputFormat)
+                    formatOutput(user, outputFormat)
                 }
 
             } catch (err) {
@@ -43,12 +45,14 @@ export function userCommand(program: Command): void {
     user
         .command('plan')
         .description('Get user plan and billing information')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching user plan...').start()
 
@@ -56,7 +60,7 @@ export function userCommand(program: Command): void {
 
                 spinner.succeed('User plan retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('User Plan:'))
                     console.log(`Plan: ${plan.plan}`)
                     console.log(`Billing Cycle Start: ${new Date(plan.billingCycle.start).toLocaleDateString()}`)
@@ -64,7 +68,7 @@ export function userCommand(program: Command): void {
                     console.log(`Balance Total: ${plan.balance.total}`)
                     console.log(`Balance Remaining: ${plan.balance.remaining}`)
                 } else {
-                    formatOutput(plan, config.outputFormat)
+                    formatOutput(plan, outputFormat)
                 }
 
             } catch (err) {
@@ -78,12 +82,14 @@ export function userCommand(program: Command): void {
         .command('billing')
         .description('Get detailed billing information')
         .option('-s, --scope <scope>', 'Billing scope')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching billing information...').start()
 
@@ -93,7 +99,7 @@ export function userCommand(program: Command): void {
 
                 spinner.succeed('Billing information retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Billing Information:'))
                     console.log(`Billing Type: ${billing.billingType}`)
 
@@ -116,7 +122,7 @@ export function userCommand(program: Command): void {
                         }
                     }
                 } else {
-                    formatOutput(billing, config.outputFormat)
+                    formatOutput(billing, outputFormat)
                 }
 
             } catch (err) {
@@ -129,12 +135,14 @@ export function userCommand(program: Command): void {
     user
         .command('scopes')
         .description('Get user scopes')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching user scopes...').start()
 
@@ -142,7 +150,7 @@ export function userCommand(program: Command): void {
 
                 spinner.succeed('User scopes retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     if (scopes.data.length === 0) {
                         info('No scopes found')
                         return
@@ -153,7 +161,7 @@ export function userCommand(program: Command): void {
                         console.log(`- ${scope.name || scope.id}`)
                     })
                 } else {
-                    formatOutput(scopes, config.outputFormat)
+                    formatOutput(scopes, outputFormat)
                 }
 
             } catch (err) {
@@ -167,12 +175,14 @@ export function userCommand(program: Command): void {
         .command('rate-limits')
         .description('Get rate limit information')
         .option('-s, --scope <scope>', 'Rate limit scope')
-        .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
-                const apiKey = await ensureApiKey()
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
                 const v0 = createClient({ apiKey })
                 const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
                 const spinner = ora('Fetching rate limits...').start()
 
@@ -182,7 +192,7 @@ export function userCommand(program: Command): void {
 
                 spinner.succeed('Rate limits retrieved')
 
-                if (config.outputFormat === 'table') {
+                if (outputFormat === 'table') {
                     console.log(chalk.blue('Rate Limits:'))
                     console.log(`Limit: ${rateLimits.limit}`)
                     console.log(`Remaining: ${rateLimits.remaining || 'Unknown'}`)
@@ -190,7 +200,7 @@ export function userCommand(program: Command): void {
                         console.log(`Reset: ${new Date(rateLimits.reset).toLocaleDateString()}`)
                     }
                 } else {
-                    formatOutput(rateLimits, config.outputFormat)
+                    formatOutput(rateLimits, outputFormat)
                 }
 
             } catch (err) {

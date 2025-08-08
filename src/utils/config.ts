@@ -28,19 +28,22 @@ export interface CliConfig {
 }
 
 export function getConfig(): CliConfig {
-    return {
-        apiKey: config.get('apiKey') as string,
-        defaultProject: config.get('defaultProject') as string,
-        outputFormat: config.get('outputFormat') as 'json' | 'table' | 'yaml'
-    }
+    const apiKey = (config.get('apiKey') as string) ?? ''
+    const defaultProject = (config.get('defaultProject') as string) ?? ''
+    const storedFormat = config.get('outputFormat') as 'json' | 'table' | 'yaml' | undefined
+    const outputFormat: 'json' | 'table' | 'yaml' = storedFormat && ['json', 'table', 'yaml'].includes(storedFormat)
+        ? storedFormat
+        : 'table'
+    return { apiKey, defaultProject, outputFormat }
 }
 
 export function setConfig(key: keyof CliConfig, value: string): void {
     config.set(key, value)
 }
 
-export async function ensureApiKey(): Promise<string> {
-    let apiKey = getConfig().apiKey
+export async function ensureApiKey(preferredApiKey?: string): Promise<string> {
+    // Priority: explicit CLI option -> env (V0_API_KEY) -> stored config -> prompt
+    let apiKey = preferredApiKey || process.env.V0_API_KEY || getConfig().apiKey
 
     if (!apiKey) {
         console.log(chalk.yellow('No API key found. Please provide your v0 API key.'))
