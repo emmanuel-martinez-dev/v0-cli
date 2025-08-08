@@ -1,6 +1,6 @@
 # v0 CLI
 
-A command-line tool for interacting with the v0 Platform API.
+A developer-friendly command-line tool to interact with the v0 Platform API.
 
 ## Installation
 
@@ -42,9 +42,9 @@ npm run build
 node dist/index.js --help
 ```
 
-## Initial Setup
+## Quick Start
 
-Before using the CLI, you need to configure your API key:
+Before using the CLI, configure your API key:
 
 ```bash
 # Interactive setup
@@ -54,9 +54,14 @@ v0 config setup
 v0 config set-api-key YOUR_API_KEY
 ```
 
-You can get your API key from: https://v0.dev/chat/settings/keys
+Get your API key from: https://v0.dev/chat/settings/keys
 
 ## Usage
+
+Key ideas:
+- Global flags: `--api-key`, `--verbose`, `--output json|yaml|table`.
+- Precedence for API key: `--api-key` > `V0_API_KEY` > saved config > interactive prompt.
+- Output format hierarchy: per-command `--output` > global `--output` > saved config.
 
 ### Chats
 
@@ -69,7 +74,7 @@ v0 chat create "Create a React component with Tailwind CSS"
 v0 chat create
 
 # With additional options
-v0 chat create "Message" --system "You are a React expert" --privacy private --model v0-1.5-md
+v0 chat create "Message" --system "You are a React expert" --privacy private --model v0-1.5-md --project-id PROJECT_ID --attachment https://example.com/a.png https://example.com/b.txt
 ```
 
 #### List chats
@@ -79,6 +84,9 @@ v0 chat list
 
 # List only favorites
 v0 chat list --favorite
+
+# Filter by project / privacy / name
+v0 chat list --project-id PROJECT_ID --privacy private --name navbar
 
 # Limit results
 v0 chat list --limit 5
@@ -96,6 +104,15 @@ v0 chat message CHAT_ID "Add form validation"
 
 # Send interactive message
 v0 chat message CHAT_ID
+```
+
+#### Update chat
+```
+# Rename
+v0 chat update CHAT_ID --name "New name"
+
+# Change privacy
+v0 chat update CHAT_ID --privacy public
 ```
 
 #### Delete chat
@@ -159,7 +176,7 @@ v0 project get-by-chat CHAT_ID
 
 #### List deployments
 ```bash
-# All deployments
+# Guided selection (recommended)
 v0 deploy list
 
 # Filter by project
@@ -382,16 +399,13 @@ echo "Deployment ready: $DEPLOYMENT_URL"
 
 ## Features
 
-- ✅ **Persistent configuration**: API key and settings are automatically saved
-- ✅ **Interactive interface**: Prompts for data input when needed
-- ✅ **Multiple output formats**: JSON, YAML, and formatted tables
-- ✅ **Error handling**: Clear and helpful error messages
-- ✅ **Spinners and feedback**: Visual progress indicators
-- ✅ **Validation**: Input validation and confirmations
-- ✅ **Colors**: Colored output for better readability
-- ✅ **Smart deployment**: Interactive project and chat selection
-- ✅ **Quick deploy**: Create project, chat and deploy in one command
-- ✅ **Name-based selection**: Select resources by name instead of IDs
+- ✅ **Persistent configuration**: API key and settings are saved automatically
+- ✅ **Output formats**: JSON, YAML, and developer-friendly tables
+- ✅ **Better errors**: Status/code/message, optional verbose body/stack
+- ✅ **Interactive UX**: Guided prompts when data is missing
+- ✅ **Smart deployments**: Project/chat/version resolution with fallbacks
+- ✅ **Vercel integration**: List and create integration projects
+- ✅ **Name-based selection**: Choose resources by name instead of IDs
 
 ## Development
 
@@ -412,6 +426,10 @@ npm run dev -- --help
 ```
 
 ### Testing
+```
+pnpm test
+pnpm test:coverage
+```
 ```bash
 npm test
 ```
@@ -470,6 +488,10 @@ npm test
    ```
 
 ### Debugging
+```
+v0 --verbose <command>
+v0 --output json <command>
+```
 
 ```bash
 # Enable verbose mode
@@ -489,7 +511,3 @@ v0 config show
 3. Commit your changes
 4. Push to the branch
 5. Open a Pull Request
-
-## License
-
-MIT 

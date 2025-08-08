@@ -12,7 +12,9 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest",
-    "prepublishOnly": "npm run build"
+    "test:coverage": "vitest run --coverage.enabled true --coverage.provider v8 --reporter=basic",
+    "prune:dist": "node -e \"require('fs').rmSync('dist/__tests__', { recursive: true, force: true })\"",
+    "prepublishOnly": "pnpm run build && pnpm run prune:dist"
   },
   "files": [
     "dist",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
