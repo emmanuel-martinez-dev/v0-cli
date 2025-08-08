@@ -151,6 +151,7 @@ export function projectCommand(program: Command): void {
         .option('-n, --name <name>', 'New project name')
         .option('-d, --description <description>', 'New project description')
         .option('-i, --instructions <instructions>', 'New project instructions')
+        .option('--vercel-project-id <vercelProjectId>', 'Link to a Vercel project ID')
         .action(async (projectId, options) => {
             try {
                 const apiKey = await ensureApiKey()
@@ -160,6 +161,7 @@ export function projectCommand(program: Command): void {
                 if (options.name) updateData.name = options.name
                 if (options.description) updateData.description = options.description
                 if (options.instructions) updateData.instructions = options.instructions
+                if (options.vercelProjectId) updateData.vercelProjectId = options.vercelProjectId
 
                 if (Object.keys(updateData).length === 0) {
                     error('No update data provided. Use --name, --description, or --instructions')
