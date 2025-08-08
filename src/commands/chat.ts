@@ -87,6 +87,9 @@ export function chatCommand(program: Command): void {
         .description('List all chats')
         .option('-f, --favorite', 'Show only favorite chats')
         .option('-l, --limit <number>', 'Number of chats to show', '10')
+        .option('-P, --project-id <id>', 'Filter by project ID')
+        .option('-n, --name <text>', 'Filter by name containing text')
+        .option('-p, --privacy <privacy>', 'Filter by privacy (public|private)')
         .option('-o, --output <format>', 'Output format (json|table|yaml)')
         .action(async (options) => {
             try {
@@ -110,7 +113,15 @@ export function chatCommand(program: Command): void {
                     return
                 }
 
-                const chats = response.data.map(chat => ({
+                // Client-side filters for convenience
+                const filtered = response.data.filter(chat => {
+                    if (options.projectId && chat.projectId !== options.projectId) return false
+                    if (options.privacy && chat.privacy !== options.privacy) return false
+                    if (options.name && !(chat.name || '').toLowerCase().includes(options.name.toLowerCase())) return false
+                    return true
+                })
+
+                const chats = filtered.map(chat => ({
                     id: chat.id,
                     name: chat.name || 'Untitled',
                     privacy: chat.privacy,
@@ -119,6 +130,13 @@ export function chatCommand(program: Command): void {
                 }))
 
                 formatOutput(chats, outputFormat)
+
+                // If API returns pagination info, surface it
+                // @ts-expect-error runtime check only
+                if (response.nextCursor) {
+                    // @ts-expect-error runtime check only
+                    console.log(chalk.gray(`\nNext page cursor: ${response.nextCursor}`))
+                }
 
             } catch (err) {
                 error(`Failed to list chats: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -161,6 +179,50 @@ export function chatCommand(program: Command): void {
                 process.exit(1)
             }
         })
+
+    // Update chat (rename, privacy)
+    chat
+        .command('update')
+        .description('Update chat details')
+        .argument('<chatId>', 'Chat ID')
+        .option('-n, --name <name>', 'New chat name')
+        .option('-p, --privacy <privacy>', 'Privacy (public|private)')
+        .option('-o, --output <format>', 'Output format (json|table|yaml)')
+        .action(async (chatId, options) => {
+            try {
+                const globalOpts = (program.opts && program.opts()) || {}
+                const apiKey = await ensureApiKey(globalOpts.apiKey)
+                const v0 = createClient({ apiKey })
+                const config = getConfig()
+                const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
+
+                const updateData: any = {}
+                if (options.name) updateData.name = options.name
+                if (options.privacy) updateData.chatPrivacy = options.privacy
+
+                if (Object.keys(updateData).length === 0) {
+                    error('No update fields provided. Use --name and/or --privacy')
+                    process.exit(1)
+                }
+
+                const spinner = ora('Updating chat...').start()
+                const chat = await v0.chats.update({ chatId, ...updateData })
+                spinner.succeed('Chat updated successfully!')
+
+                if (outputFormat === 'table') {
+                    formatChat(chat)
+                } else {
+                    formatOutput(chat, outputFormat)
+                }
+            } catch (err) {
+                error(`Failed to update chat: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
+                process.exit(1)
+            }
+        })
+
+    // Archive/Unarchive not available in current SDK
 
     // Send message to chat
     chat

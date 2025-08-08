@@ -192,6 +192,8 @@ export function projectCommand(program: Command): void {
             }
         })
 
+    // Delete project (not available in current SDK)
+
     // Assign chat to project
     project
         .command('assign')
