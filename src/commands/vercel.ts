@@ -4,7 +4,7 @@ import ora from 'ora'
 import inquirer from 'inquirer'
 import { createClient } from 'v0-sdk'
 import { ensureApiKey, getConfig } from '../utils/config.js'
-import { formatOutput, error, info, success } from '../utils/output.js'
+import { formatOutput, error, info, success, printSdkError } from '../utils/output.js'
 
 export function vercelCommand(program: Command): void {
     const vercel = program
@@ -41,6 +41,8 @@ export function vercelCommand(program: Command): void {
                 formatOutput(rows, outputFormat)
             } catch (err) {
                 error(`Failed to list Vercel projects: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -70,6 +72,8 @@ export function vercelCommand(program: Command): void {
                 formatOutput(integration, outputFormat)
             } catch (err) {
                 error(`Failed to create integration project: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })

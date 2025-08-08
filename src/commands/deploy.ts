@@ -4,14 +4,14 @@ import ora from 'ora'
 import inquirer from 'inquirer'
 import { createClient } from 'v0-sdk'
 import { ensureApiKey, getConfig } from '../utils/config.js'
-import { formatOutput, success, error, info } from '../utils/output.js'
+import { formatOutput, success, error, info, printSdkError } from '../utils/output.js'
 
 export function deployCommand(program: Command): void {
     const deploy = program
         .command('deploy')
         .description('Manage v0 deployments')
 
-    // List deployments
+    // List deployments (guided if IDs are missing)
     deploy
         .command('list')
         .description('List deployments')
@@ -27,14 +27,93 @@ export function deployCommand(program: Command): void {
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
+                // Resolve required IDs. API expects projectId, chatId, versionId.
+                let finalProjectId: string | undefined = options.projectId || config.defaultProject || undefined
+                let finalChatId: string | undefined = options.chatId || undefined
+                let finalVersionId: string | undefined = options.versionId || undefined
+
+                // If anything is missing, guide interactively
+                if (!finalProjectId || !finalChatId || !finalVersionId) {
+                    const spinnerLoad = ora('Loading resources...').start()
+                    const projectsResponse = await v0.projects.find()
+                    const chatsResponse = await v0.chats.find({ limit: '50' })
+                    spinnerLoad.succeed('Resources loaded')
+
+                    if (!finalProjectId) {
+                        if (projectsResponse.data.length === 0) {
+                            error('No projects found. Create a project first.')
+                            process.exit(1)
+                        }
+                        const ans = await inquirer.prompt([
+                            {
+                                type: 'list',
+                                name: 'projectId',
+                                message: 'Select a project:',
+                                choices: projectsResponse.data.map((p) => ({ name: `${p.name} (${p.id})`, value: p.id })),
+                            },
+                        ])
+                        finalProjectId = ans.projectId
+                    }
+
+                    // Ensure the selected project is linked to Vercel; if not, prompt to pick another (no mass scanning)
+                    if (finalProjectId) {
+                        let attempts = 0
+                        while (attempts < 3) {
+                            attempts++
+                            const proj = await v0.projects.getById({ projectId: finalProjectId as string })
+                            if (proj.vercelProjectId) break
+                            const pick = await inquirer.prompt([
+                                {
+                                    type: 'list',
+                                    name: 'projectId',
+                                    message: 'Selected project is not linked to Vercel. Choose a different project:',
+                                    choices: projectsResponse.data.map((p) => ({ name: `${p.name} (${p.id})`, value: p.id })),
+                                },
+                            ])
+                            finalProjectId = pick.projectId
+                        }
+                        // After attempts, re-check and fail if still not linked
+                        const finalProj = await v0.projects.getById({ projectId: finalProjectId as string })
+                        if (!finalProj.vercelProjectId) {
+                            error('No Vercel-linked project selected. Link a Vercel project (try: v0 vercel create) and retry.')
+                            process.exit(1)
+                        }
+                    }
+
+                    if (!finalChatId) {
+                        const relevantChats = chatsResponse.data.filter((c) => !finalProjectId || c.projectId === finalProjectId)
+                        if (relevantChats.length === 0) {
+                            error('No chats found for the selected project. Create a chat first.')
+                            process.exit(1)
+                        }
+                        const ans = await inquirer.prompt([
+                            {
+                                type: 'list',
+                                name: 'chatId',
+                                message: 'Select a chat:',
+                                choices: relevantChats.map((c) => ({ name: `${c.name || 'Unnamed'} (${c.id})`, value: c.id })),
+                            },
+                        ])
+                        finalChatId = ans.chatId
+                    }
+
+                    if (!finalVersionId && finalChatId) {
+                        const chatDetails = await v0.chats.getById({ chatId: finalChatId })
+                        if (!chatDetails.latestVersion) {
+                            error('No versions found for this chat.')
+                            process.exit(1)
+                        }
+                        finalVersionId = chatDetails.latestVersion.id
+                        info(`Using latest version: ${finalVersionId}`)
+                    }
+                }
+
                 const spinner = ora('Fetching deployments...').start()
-
                 const response = await v0.deployments.find({
-                    projectId: options.projectId,
-                    chatId: options.chatId,
-                    versionId: options.versionId
+                    projectId: finalProjectId!,
+                    chatId: finalChatId!,
+                    versionId: finalVersionId!,
                 })
-
                 spinner.succeed(`Found ${response.data.length} deployments`)
 
                 if (response.data.length === 0) {
@@ -55,6 +134,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to list deployments: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -218,6 +299,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to create deployment: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -375,6 +458,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to create deployment: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -511,6 +596,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to create quick deploy: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -547,6 +634,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get deployment: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -587,6 +676,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to delete deployment: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -639,6 +730,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get deployment logs: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -686,6 +779,8 @@ export function deployCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get deployment errors: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })

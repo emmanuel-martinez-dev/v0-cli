@@ -4,7 +4,7 @@ import ora from 'ora'
 import inquirer from 'inquirer'
 import { createClient } from 'v0-sdk'
 import { ensureApiKey, getConfig } from '../utils/config.js'
-import { formatOutput, success, error, info, formatChat } from '../utils/output.js'
+import { formatOutput, success, error, info, formatChat, printSdkError } from '../utils/output.js'
 
 export function chatCommand(program: Command): void {
     const chat = program
@@ -75,6 +75,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to create chat: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -120,6 +122,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to list chats: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -152,6 +156,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get chat: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -208,6 +214,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to send message: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -248,6 +256,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to delete chat: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -275,6 +285,8 @@ export function chatCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to update favorite status: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })

@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 import { createClient } from 'v0-sdk'
 import { ensureApiKey, getConfig } from '../utils/config.js'
-import { formatOutput, success, error, info, formatUser } from '../utils/output.js'
+import { formatOutput, success, error, info, formatUser, printSdkError } from '../utils/output.js'
 
 export function userCommand(program: Command): void {
     const user = program
@@ -37,6 +37,8 @@ export function userCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get user information: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -73,6 +75,8 @@ export function userCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get user plan: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -127,6 +131,8 @@ export function userCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get billing information: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -166,6 +172,8 @@ export function userCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get user scopes: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })
@@ -205,6 +213,8 @@ export function userCommand(program: Command): void {
 
             } catch (err) {
                 error(`Failed to get rate limits: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                const globalOpts = (program.opts && program.opts()) || {}
+                printSdkError(err, !!globalOpts.verbose)
                 process.exit(1)
             }
         })

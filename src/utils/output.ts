@@ -23,27 +23,67 @@ export function formatOutput(data: any, format: 'json' | 'table' | 'yaml' = 'tab
 }
 
 function formatTable(data: any): void {
+    const maxColumnWidth = 40
+    const truncate = (value: string, limit = maxColumnWidth): string => {
+        if (value.length <= limit) return value
+        return value.slice(0, limit - 1) + '…'
+    }
+
+    const stringifyValue = (val: unknown): string => {
+        if (val === null || val === undefined) return ''
+        if (typeof val === 'string') return val
+        if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+        if (val instanceof Date) return val.toISOString()
+        try {
+            return JSON.stringify(val)
+        } catch {
+            return String(val)
+        }
+    }
+
     if (Array.isArray(data)) {
         if (data.length === 0) {
             console.log(chalk.gray('No items found'))
             return
         }
 
-        // Simple table formatting
-        const headers = Object.keys(data[0])
-        const table = [headers, ...data.map(item => headers.map(header => item[header]))]
-
-        console.log(chalk.blue(headers.join(' | ')))
-        console.log(chalk.gray('-'.repeat(headers.join(' | ').length)))
-
-        for (let i = 1; i < table.length; i++) {
-            console.log(table[i].join(' | '))
+        // If array of primitives, print as list
+        if (typeof data[0] !== 'object' || data[0] === null) {
+            data.forEach((item, idx) => {
+                console.log(`${idx + 1}. ${truncate(stringifyValue(item), 120)}`)
+            })
+            return
         }
-    } else {
-        // Single object
-        Object.entries(data).forEach(([key, value]) => {
-            console.log(`${chalk.blue(key)}: ${value}`)
+
+        // Array of objects: collect all headers
+        const headersSet = new Set<string>()
+        data.forEach((item) => {
+            Object.keys(item).forEach((k) => headersSet.add(k))
         })
+        const headers = Array.from(headersSet)
+
+        // Compute column widths
+        const widths = headers.map((h) => Math.min(maxColumnWidth, Math.max(h.length, ...data.map((row) => truncate(stringifyValue((row as any)[h])).length))))
+
+        // Print header
+        const headerRow = headers
+            .map((h, i) => h.padEnd(widths[i]))
+            .join(' | ')
+        console.log(chalk.blue(headerRow))
+        console.log(chalk.gray('-'.repeat(headerRow.length)))
+
+        // Rows
+        for (const row of data) {
+            const cols = headers.map((h, i) => truncate(stringifyValue((row as any)[h])).padEnd(widths[i]))
+            console.log(cols.join(' | '))
+        }
+    } else if (typeof data === 'object' && data !== null) {
+        // Single object: key: value
+        Object.entries(data).forEach(([key, value]) => {
+            console.log(`${chalk.blue(key)}: ${stringifyValue(value)}`)
+        })
+    } else {
+        console.log(stringifyValue(data))
     }
 }
 
@@ -95,4 +135,36 @@ export function formatUser(user: any): void {
     console.log(`Name: ${user.name || 'No name'}`)
     console.log(`Email: ${user.email}`)
     console.log(`Avatar: ${user.avatar}`)
-} 
+}
+
+export function printSdkError(err: unknown, verbose: boolean = false): void {
+    const unknownMsg = 'Unknown error'
+    if (!err) {
+        if (verbose) console.error(chalk.gray('[no error object]'))
+        return
+    }
+    // Try to extract common fields
+    const anyErr = err as any
+    const status = anyErr?.status || anyErr?.response?.status
+    const body = anyErr?.response?.data || anyErr?.body || anyErr?.error || anyErr?.data
+    const code = anyErr?.code || anyErr?.error?.type
+    const detail = anyErr?.message || anyErr?.error?.message || unknownMsg
+
+    const parts: string[] = []
+    if (status) parts.push(`status=${status}`)
+    if (code) parts.push(`code=${code}`)
+    if (detail) parts.push(`message=${detail}`)
+    if (parts.length > 0) {
+        console.error(chalk.gray('Details:'), parts.join(' | '))
+    }
+    if (verbose && body) {
+        try {
+            console.error(chalk.gray('Body:'), typeof body === 'string' ? body : JSON.stringify(body, null, 2))
+        } catch {
+            console.error(chalk.gray('Body:'), String(body))
+        }
+    }
+    if (verbose && anyErr?.stack) {
+        console.error(chalk.gray(anyErr.stack))
+    }
+}
