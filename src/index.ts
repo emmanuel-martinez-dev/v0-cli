@@ -11,6 +11,7 @@ import { projectCommand } from './commands/project.js'
 import { deployCommand } from './commands/deploy.js'
 import { userCommand } from './commands/user.js'
 import { configCommand } from './commands/config.js'
+import { vercelCommand } from './commands/vercel.js'
 
 // Read package.json
 const __filename = fileURLToPath(import.meta.url)
@@ -32,6 +33,7 @@ projectCommand(program)
 deployCommand(program)
 userCommand(program)
 configCommand(program)
+vercelCommand(program)
 
 // Global error handler
 program.exitOverride()
