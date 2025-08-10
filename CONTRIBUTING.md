@@ -12,8 +12,8 @@ Thank you for your interest in contributing to v0 CLI! This document provides gu
 ### Development Setup
 ```bash
 # Clone the repository
-git clone https://github.com/vercel/v0-sdk.git
-cd v0-sdk/cli
+git git@github.com:manuel-soria/v0-cli.git
+cd v0-cli
 
 # Install dependencies
 npm install
