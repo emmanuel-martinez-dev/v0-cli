@@ -12,7 +12,7 @@ Thank you for your interest in contributing to v0 CLI! This document provides gu
 ### Development Setup
 ```bash
 # Clone the repository
-git git@github.com:manuel-soria/v0-cli.git
+git git@github.com:emmanuel-martinez-dev/v0-cli.git
 cd v0-cli
 
 # Install dependencies

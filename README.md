@@ -8,7 +8,7 @@ A developer-friendly command-line tool to interact with the v0 Platform API.
 
 ```bash
 # Clone the repository
-git clone git@github.com:manuel-soria/v0-cli.git
+git clone git@github.com:emmanuel-martinez-dev/v0-cli.git
 cd v0-cli
 
 # Install CLI locally
@@ -29,7 +29,7 @@ npx v0-cli --help
 
 ```bash
 # Clone and setup for development
-git clone git@github.com:manuel-soria/v0-cli.git
+git clone git@github.com:emmanuel-martinez-dev/v0-cli.git
 cd v0-cli
 
 # Install dependencies
