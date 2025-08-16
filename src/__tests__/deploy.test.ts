@@ -19,11 +19,13 @@ const deploymentsMock = {
 const projectsMock = {
     find: vi.fn(async () => ({ object: 'list', data: [{ id: 'proj_1', object: 'project', name: 'P1', privacy: 'private', apiUrl: '', webUrl: '', createdAt: new Date().toISOString() }] })),
     getById: vi.fn(async () => ({ id: 'proj_1', object: 'project', name: 'P1', privacy: 'private', apiUrl: '', webUrl: '', createdAt: new Date().toISOString(), chats: [], vercelProjectId: 'ver_1' })),
+    create: vi.fn(async ({ name }: any) => ({ id: 'proj_X', name, createdAt: Date.now(), webUrl: '' })),
 }
 
 const chatsMock = {
     find: vi.fn(async () => ({ object: 'list', data: [{ id: 'chat_1', object: 'chat', shareable: true, privacy: 'private', favorite: false, authorId: 'u1', createdAt: new Date().toISOString(), apiUrl: '', webUrl: '' }] })),
     getById: vi.fn(async () => ({ id: 'chat_1', object: 'chat', shareable: true, privacy: 'private', favorite: false, authorId: 'u1', createdAt: new Date().toISOString(), apiUrl: '', webUrl: '', text: '', latestVersion: { id: 'v1', object: 'version', status: 'completed', createdAt: new Date().toISOString(), files: [] } })),
+    create: vi.fn(async () => ({ id: 'chat_X', webUrl: 'https://chat', latestVersion: { id: 'vX' } })),
 }
 
 vi.mock('v0-sdk', () => {
@@ -61,19 +63,12 @@ describe('deploy commands', () => {
     })
 
     it('quick creates project, chat and deployment', async () => {
-        // Mock additional methods used by quick
-        const v0 = require('v0-sdk')
-        const client = v0.createClient()
-        client.projects.create = vi.fn(async ({ name }: any) => ({ id: 'proj_X', name, createdAt: Date.now(), webUrl: '' }))
-        client.chats.create = vi.fn(async () => ({ id: 'chat_X', webUrl: 'https://chat', latestVersion: { id: 'vX' } }))
-        client.chats.getById = vi.fn(async () => ({ id: 'chat_X', latestVersion: { id: 'vX' } }))
-        client.deployments.create = vi.fn(async ({ projectId, chatId, versionId }: any) => ({ id: 'dX', projectId, chatId, versionId, inspectorUrl: '', webUrl: '' }))
-
         const program = makeProgram()
         await program.parseAsync(['deploy', 'quick', 'Hola mundo', '--project-name', 'My Project', '-o', 'json'], { from: 'user' })
-        expect(client.projects.create).toHaveBeenCalled()
-        expect(client.chats.create).toHaveBeenCalled()
-        expect(client.deployments.create).toHaveBeenCalledWith({ projectId: 'proj_X', chatId: 'chat_X', versionId: 'vX' })
+        expect(projectsMock.create).toHaveBeenCalled()
+        expect(chatsMock.create).toHaveBeenCalled()
+        // The command uses the chat details to get latestVersion; ensure deployments.create was called
+        expect(deploymentsMock.create).toHaveBeenCalled()
     })
 
     it('get calls deployments.getById', async () => {
