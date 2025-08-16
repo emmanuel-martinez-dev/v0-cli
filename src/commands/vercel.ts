@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 import inquirer from 'inquirer'
 import { createClient } from 'v0-sdk'
-import { ensureApiKey, getConfig } from '../utils/config.js'
+import { ensureApiKey, getConfig, resolveBaseUrl } from '../utils/config.js'
 import { formatOutput, error, info, success, printSdkError } from '../utils/output.js'
 
 export function vercelCommand(program: Command): void {
@@ -20,7 +20,8 @@ export function vercelCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
@@ -58,7 +59,8 @@ export function vercelCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 

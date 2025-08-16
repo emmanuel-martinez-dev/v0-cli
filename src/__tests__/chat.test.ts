@@ -5,7 +5,8 @@ import { chatCommand } from '../commands/chat.js'
 // Mock config helpers
 vi.mock('../utils/config.js', () => ({
     ensureApiKey: vi.fn(async () => 'test-key'),
-    getConfig: vi.fn(() => ({ apiKey: 'test-key', defaultProject: 'proj_1', outputFormat: 'json' })),
+    getConfig: vi.fn(() => ({ apiKey: 'test-key', defaultProject: 'proj_1', baseUrl: '', outputFormat: 'json' })),
+    resolveBaseUrl: vi.fn((preferred?: string) => preferred || process.env.V0_BASE_URL || ''),
 }))
 
 // Mock fs for file-based commands

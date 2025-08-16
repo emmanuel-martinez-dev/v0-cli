@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 import inquirer from 'inquirer'
 import { createClient } from 'v0-sdk'
-import { ensureApiKey, getConfig } from '../utils/config.js'
+import { ensureApiKey, getConfig, resolveBaseUrl } from '../utils/config.js'
 import { formatOutput, success, error, info, formatProject, printSdkError } from '../utils/output.js'
 
 export function projectCommand(program: Command): void {
@@ -25,8 +25,10 @@ export function projectCommand(program: Command): void {
         .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
         .action(async (name, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
 
                 let projectName = name
@@ -99,8 +101,10 @@ export function projectCommand(program: Command): void {
         .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
         .action(async (options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
 
                 const spinner = ora('Fetching projects...').start()
@@ -140,8 +144,10 @@ export function projectCommand(program: Command): void {
         .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
         .action(async (projectId, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
 
                 const spinner = ora('Fetching project details...').start()
@@ -182,8 +188,10 @@ export function projectCommand(program: Command): void {
         .option('--privacy <privacy>', 'Project privacy (private|team)')
         .action(async (projectId, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
 
                 const updateData: any = {}
                 if (options.name) updateData.name = options.name
@@ -224,8 +232,10 @@ export function projectCommand(program: Command): void {
         .argument('<chatId>', 'Chat ID')
         .action(async (projectId, chatId) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
 
                 const spinner = ora('Assigning chat to project...').start()
 
@@ -253,8 +263,10 @@ export function projectCommand(program: Command): void {
         .option('-o, --output <format>', 'Output format (json|table|yaml)', 'table')
         .action(async (chatId, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
 
                 const spinner = ora('Fetching project...').start()

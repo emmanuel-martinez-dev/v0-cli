@@ -24,6 +24,7 @@ describe('Config Utils', () => {
             expect(config).toEqual({
                 apiKey: '',
                 defaultProject: '',
+                baseUrl: '',
                 outputFormat: 'table'
             })
         })

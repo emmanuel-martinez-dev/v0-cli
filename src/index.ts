@@ -13,6 +13,7 @@ import { userCommand } from './commands/user.js'
 import { configCommand } from './commands/config.js'
 import { vercelCommand } from './commands/vercel.js'
 import { hooksCommand } from './commands/hooks.js'
+import { resolveBaseUrl } from './utils/config.js'
 
 // Read package.json
 const __filename = fileURLToPath(import.meta.url)
@@ -43,6 +44,12 @@ program.exitOverride()
 
 try {
     await program.parseAsync()
+    // After parse, propagate baseUrl to SDK default via env if provided
+    const opts = program.opts && program.opts()
+    const baseUrl = resolveBaseUrl(opts?.baseUrl)
+    if (baseUrl) {
+        process.env.V0_BASE_URL = baseUrl
+    }
 } catch (error) {
     // Check if it's a help command error (which is expected)
     if (error instanceof Error && error.message.includes('outputHelp')) {

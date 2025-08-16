@@ -5,7 +5,7 @@ import inquirer from 'inquirer'
 import { readFileSync } from 'fs'
 import { basename } from 'path'
 import { createClient } from 'v0-sdk'
-import { ensureApiKey, getConfig } from '../utils/config.js'
+import { ensureApiKey, getConfig, resolveBaseUrl } from '../utils/config.js'
 import { formatOutput, success, error, info, formatChat, printSdkError } from '../utils/output.js'
 
 export function chatCommand(program: Command): void {
@@ -28,7 +28,8 @@ export function chatCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
@@ -97,7 +98,8 @@ export function chatCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
@@ -158,7 +160,8 @@ export function chatCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
@@ -194,7 +197,8 @@ export function chatCommand(program: Command): void {
             try {
                 const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey(globalOpts.apiKey)
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
                 const config = getConfig()
                 const outputFormat = (options.output || globalOpts.output || config.outputFormat) as 'json' | 'table' | 'yaml'
 
@@ -629,8 +633,10 @@ export function chatCommand(program: Command): void {
         .option('-f, --force', 'Skip confirmation')
         .action(async (chatId, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
 
                 if (!options.force) {
                     const answers = await inquirer.prompt([
@@ -671,8 +677,10 @@ export function chatCommand(program: Command): void {
         .option('-r, --remove', 'Remove from favorites')
         .action(async (chatId, options) => {
             try {
+                const globalOpts = (program.opts && program.opts()) || {}
                 const apiKey = await ensureApiKey()
-                const v0 = createClient({ apiKey })
+                const baseUrl = resolveBaseUrl(globalOpts.baseUrl)
+                const v0 = createClient({ apiKey, baseUrl })
 
                 const spinner = ora(options.remove ? 'Removing from favorites...' : 'Adding to favorites...').start()
 

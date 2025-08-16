@@ -124,6 +124,33 @@ export function configCommand(program: Command): void {
             }
         })
 
+    // Set base URL
+    config
+        .command('set-base-url')
+        .description('Set custom API base URL (e.g., https://api.v0.dev/v1)')
+        .argument('[url]', 'Base URL to set')
+        .action(async (url) => {
+            try {
+                let finalUrl = url
+                if (!finalUrl) {
+                    const answers = await inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'url',
+                            message: 'Enter base URL (leave empty to reset to default):',
+                        },
+                    ])
+                    finalUrl = answers.url
+                }
+
+                setConfig('baseUrl', (finalUrl || '').trim())
+                success(`Base URL ${finalUrl ? `set to: ${finalUrl}` : 'cleared (using default)'}`)
+            } catch (err) {
+                error(`Failed to set base URL: ${err instanceof Error ? err.message : 'Unknown error'}`)
+                process.exit(1)
+            }
+        })
+
     // Clear config
     config
         .command('clear')
