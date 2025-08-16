@@ -24,8 +24,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1
       v0-sdk:
-        specifier: ^0.6.2
-        version: 0.6.2
+        specifier: ^0.7.1
+        version: 0.7.1
       yaml:
         specifier: ^2.5.0
         version: 2.8.1
@@ -1157,8 +1157,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  v0-sdk@0.6.2:
-    resolution: {integrity: sha512-YB2yBfIyew9u6/4ep8OTe8XnSysUWgC+8ij7W2oZnVfYlKYZ8DHuUs++FyoTvqCq/FCpLO/1/ViutWuatJbObA==}
+  v0-sdk@0.7.1:
+    resolution: {integrity: sha512-3CMtehB/fFkmsTW9nwHPhlw6d1xRpVvGLxtsOJfUC4NxVUj1ZPu3aBgq7oeh6t4qvwaU8tHth35ccs1xeTrHeQ==}
 
   vite-node@1.6.1:
     resolution: {integrity: sha512-YAXkfvGtuTzwWbDSACdJSg4A4DZiAqckWe90Zapc/sEX3XvHcw1NdurM/6od8J207tSDqNbSsgdCacBgvJKFuA==}
@@ -2253,7 +2253,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  v0-sdk@0.6.2: {}
+  v0-sdk@0.7.1: {}
 
   vite-node@1.6.1(@types/node@20.19.9):
     dependencies:
